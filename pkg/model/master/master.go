@@ -12,6 +12,7 @@ type Master struct{
 	clusterName string
 	namespace string
 	apiServer apiServer
+	scheduler Scheduler
 }
 
 func NewMaster(environment v1alpha1.Environment, clusterName, namespace,
@@ -22,6 +23,7 @@ func NewMaster(environment v1alpha1.Environment, clusterName, namespace,
 		clusterName: clusterName,
 		namespace: namespace,
 		apiServer: newAPIServer(advertiseAddress,serviceClusterIpRange,admissionPlugins),
+		scheduler: NewScheduler(),
 	}
 }
 
@@ -35,6 +37,7 @@ func (master *Master) BuildPod()corev1.Pod{
 			Volumes: master.buildVolumes(),
 			Containers: []corev1.Container{
 				master.apiServer.BuildContainer(),
+				master.scheduler.BuilderContainer(),
 			},
 		},
 	}
