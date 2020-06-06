@@ -15,6 +15,7 @@ type ControlPlaneSpec struct {
 	AdmissionPlugins []string `json:"admissionPlugins,omitempty"`
 	ServiceClusterIPRange string `json:"serviceClusterIpRange,omitempty"`
 	ClusterCIDR string `json:"clusterCidr,omitempty"`
+	LoadBalancerAddress string `json:"loadBalancerAddress,omitempty"`
 }
 
 // ControlPlaneStatus defines the observed state of ControlPlane

@@ -41,6 +41,8 @@ spec:
               type: string
             environment:
               type: string
+            loadBalancerAddress:
+              type: string
             masterSecret:
               type: string
             serviceClusterIpRange:

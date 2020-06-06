@@ -56,6 +56,6 @@ type ReconcileControlPlane struct {
 func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling ControlPlane")
-
+	reque
 	return reconcile.Result{}, nil
 }
