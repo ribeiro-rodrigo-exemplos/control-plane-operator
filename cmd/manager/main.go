@@ -77,7 +77,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	// Get a config to talk to the apiserver
+	// Get a config to talk to the master
 	cfg, err := config.GetConfig()
 	if err != nil {
 		log.Error(err, "")
