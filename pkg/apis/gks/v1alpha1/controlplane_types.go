@@ -9,10 +9,9 @@ import (
 
 // ControlPlaneSpec defines the desired state of ControlPlane
 type ControlPlaneSpec struct {
-	APICount int `json:"apiCount,omitempty"`
-	ETCDCount int `json:"etcdCount,omitempty"`
-	CASecretName string `json:"caSecretName,omitempty"`
-	MasterSecretName string `json:"masterSecretName,omitempty"`
+	EnvironmentName string `json:"environment,omitempty"`
+	CASecretName string `json:"caSecret,omitempty"`
+	MasterSecretName string `json:"masterSecret,omitempty"`
 	AdmissionPlugins []string `json:"admissionPlugins,omitempty"`
 	ServiceClusterIPRange string `json:"serviceClusterIpRange,omitempty"`
 	ClusterCIDR string `json:"clusterCidr,omitempty"`

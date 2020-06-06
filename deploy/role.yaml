@@ -70,6 +70,7 @@ rules:
   - gks.globo.com
   resources:
   - '*'
+  - environments
   verbs:
   - create
   - delete

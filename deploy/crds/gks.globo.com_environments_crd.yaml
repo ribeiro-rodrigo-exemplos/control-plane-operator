@@ -1,20 +1,20 @@
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
 metadata:
-  name: controlplanes.gks.globo.com
+  name: environments.gks.globo.com
 spec:
   group: gks.globo.com
   names:
-    kind: ControlPlane
-    listKind: ControlPlaneList
-    plural: controlplanes
-    singular: controlplane
+    kind: Environment
+    listKind: EnvironmentList
+    plural: environments
+    singular: environment
   scope: Namespaced
   subresources:
     status: {}
   validation:
     openAPIV3Schema:
-      description: ControlPlane is the Schema for the controlplanes API
+      description: Environment is the Schema for the environments API
       properties:
         apiVersion:
           description: 'APIVersion defines the versioned schema of this representation
@@ -29,25 +29,25 @@ spec:
         metadata:
           type: object
         spec:
-          description: ControlPlaneSpec defines the desired state of ControlPlane
+          description: EnvironmentSpec defines the desired state of Environment
           properties:
-            admissionPlugins:
-              items:
-                type: string
-              type: array
-            caSecret:
-              type: string
-            clusterCidr:
-              type: string
-            environment:
-              type: string
-            masterSecret:
-              type: string
-            serviceClusterIpRange:
-              type: string
+            controlPlane:
+              properties:
+                apiCount:
+                  type: integer
+                etcdCount:
+                  type: integer
+              required:
+              - etcdCount
+              type: object
+            security:
+              properties:
+                encryptionConfig:
+                  type: string
+              type: object
           type: object
         status:
-          description: ControlPlaneStatus defines the observed state of ControlPlane
+          description: EnvironmentStatus defines the observed state of Environment
           type: object
       type: object
   version: v1alpha1
