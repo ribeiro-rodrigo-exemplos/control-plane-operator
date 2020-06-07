@@ -7,6 +7,14 @@ import (
 type ControlPlaneSettings struct {
 	MasterCount int `json:"masterCount,omitempty"`
 	ETCDCount int `json:"etcdCount"`
+	MasterSettings `json:"master,omitempty"`
+}
+
+type MasterSettings struct {
+	RequiredMemory string `json:"requiredMemory,omitempty"`
+	RequiredCPU string `json:"requiredCPU,omitempty"`
+	MaxMemory string `json:"maxMemory,omitempty"`
+	MaxCPU string `json:"maxCPU,omitempty"`
 }
 
 type SecuritySettings struct{

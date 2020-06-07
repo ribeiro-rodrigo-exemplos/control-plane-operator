@@ -35,6 +35,17 @@ spec:
               properties:
                 etcdCount:
                   type: integer
+                master:
+                  properties:
+                    maxCPU:
+                      type: string
+                    maxMemory:
+                      type: string
+                    requiredCPU:
+                      type: string
+                    requiredMemory:
+                      type: string
+                  type: object
                 masterCount:
                   type: integer
               required:
