@@ -35,13 +35,9 @@ spec:
               items:
                 type: string
               type: array
-            caSecret:
-              type: string
             clusterCidr:
               type: string
             environment:
-              type: string
-            loadBalancerAddress:
               type: string
             masterSecret:
               type: string

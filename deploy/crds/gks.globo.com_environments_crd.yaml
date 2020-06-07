@@ -33,16 +33,16 @@ spec:
           properties:
             controlPlane:
               properties:
-                apiCount:
-                  type: integer
                 etcdCount:
+                  type: integer
+                masterCount:
                   type: integer
               required:
               - etcdCount
               type: object
             security:
               properties:
-                encryptionConfig:
+                encryptionSecret:
                   type: string
               type: object
           type: object

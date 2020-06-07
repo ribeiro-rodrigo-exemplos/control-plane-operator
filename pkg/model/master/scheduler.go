@@ -29,8 +29,9 @@ func (*Scheduler) buildVolumeMounts()[]corev1.VolumeMount{
 	}
 }
 
-func (*Scheduler) buildCommands()[]string{
+func (scheduler *Scheduler) buildCommands()[]string{
 	return []string{
+		scheduler.applicationName,
 		printFlag("leader-elect", true),
 		printFlag("kubeconfig","/var/lib/kubernetes/kube-scheduler.kubeconfig"),
 		printFlag("v", 2),

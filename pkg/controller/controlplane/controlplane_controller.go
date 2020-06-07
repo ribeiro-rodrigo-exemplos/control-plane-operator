@@ -1,9 +1,13 @@
 package controlplane
 
 import (
+	"context"
 	gksv1alpha1 "gitlab.globoi.com/tks/gks/control-plane-operator/pkg/apis/gks/v1alpha1"
+	"gitlab.globoi.com/tks/gks/control-plane-operator/pkg/model/master"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
@@ -56,6 +60,55 @@ type ReconcileControlPlane struct {
 func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.Result, error) {
 	reqLogger := log.WithValues("Request.Namespace", request.Namespace, "Request.Name", request.Name)
 	reqLogger.Info("Reconciling ControlPlane")
-	reque
+
+	instance := &gksv1alpha1.ControlPlane{}
+	err := r.client.Get(context.TODO(), request.NamespacedName, instance)
+
+	if err != nil {
+		if errors.IsNotFound(err){
+			return reconcile.Result{}, nil
+		}
+
+		return reconcile.Result{}, err
+	}
+
+	environment := &gksv1alpha1.Environment{}
+	err = r.client.Get(context.TODO(), types.NamespacedName{
+		Namespace: instance.Namespace,
+		Name: instance.Spec.EnvironmentName,
+	}, environment)
+
+	if err != nil {
+		if errors.IsNotFound(err){
+			reqLogger.Info("Environment not found")
+			//create default environment settings
+		}
+		return reconcile.Result{}, err
+	}
+
+	masterModel := buildMaster(instance, environment)
+
+	masterPod := masterModel.BuildPod()
+
+	err = r.client.Create(context.TODO(), &masterPod)
+
+	if err != nil {
+		reqLogger.Error(err,"Error in create pod master")
+		return reconcile.Result{}, err
+	}
+
 	return reconcile.Result{}, nil
+}
+
+func buildMaster(instance *gksv1alpha1.ControlPlane, environment *gksv1alpha1.Environment)master.Master{
+	return master.NewMaster(
+		*environment,
+		instance.Name,
+		instance.Namespace,
+		"192.168.39.42",
+		instance.Spec.ServiceClusterIPRange,
+		instance.Spec.ClusterCIDR,
+		instance.Spec.MasterSecretName,
+		instance.Spec.AdmissionPlugins,
+	)
 }

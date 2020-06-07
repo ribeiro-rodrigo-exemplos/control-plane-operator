@@ -11,15 +11,18 @@ type apiServer struct {
 	serviceClusterIPRange string
 	advertiseAddress string
 	admissionPlugins []string
+	masterCount int
 }
 
-func newAPIServer(advertiseAddress, serviceClusterIpRange string, admissionPlugins []string )apiServer{
+func newAPIServer(advertiseAddress, serviceClusterIpRange string,
+	admissionPlugins []string, masterCount int )apiServer{
 	apiServer := apiServer{
-		image: "rodrigoribeiro/globo-kube-master",
+		image: "rodrigoribeiro/globo-kube-apiserver",
 		applicationName: "kube-apiserver",
 		advertiseAddress: advertiseAddress,
 		serviceClusterIPRange: serviceClusterIpRange,
 		admissionPlugins: admissionPlugins,
+		masterCount: masterCount,
 	}
 
 	return apiServer
@@ -52,7 +55,7 @@ func (apiServer *apiServer) buildCommands()[]string{
 		apiServer.applicationName,
 		printFlag("advertise-address",apiServer.advertiseAddress),
 		printFlag("allow-privileged",true),
-		printFlag("master-count", 1),
+		printFlag("apiserver-count", apiServer.masterCount),
 		printFlag("audit-log-maxage",30),
 		printFlag("audit-log-maxbackup",3),
 		printFlag("audit-log-maxsize",100),
@@ -66,13 +69,13 @@ func (apiServer *apiServer) buildCommands()[]string{
 		printFlag("etcd-keyfile","/var/lib/kubernetes/kubernetes-key.pem"),
 		printFlag("etcd-servers","https://161.35.116.213:2379"),
 		printFlag("event-ttl","1h"),
-		printFlag("encryption-provider-config","/var/lib/kubernetes/encryptation/encryption-config.yaml"),
+		printFlag("encryption-provider-config","/var/lib/kubernetes/encryption/encryption-config.yaml"),
 		printFlag("kubelet-certificate-authority","/var/lib/kubernetes/ca/ca.pem"),
 		printFlag("kubelet-client-certificate","/var/lib/kubernetes/kubernetes.pem"),
 		printFlag("kubelet-client-key","/var/lib/kubernetes/kubernetes-key.pem"),
 		printFlag("kubelet-https",true),
 		printFlag("runtime-config","api/all"),
-		printFlag("service-account-key-file","/var/lib/kubernetes/serviceaccount/service-account.pem"),
+		printFlag("service-account-key-file","/var/lib/kubernetes/service-account.pem"),
 		printFlag("service-cluster-ip-range", apiServer.serviceClusterIPRange),
 		printFlag("service-node-port-range","30000-32767"),
 		printFlag("tls-cert-file","/var/lib/kubernetes/kubernetes.pem"),

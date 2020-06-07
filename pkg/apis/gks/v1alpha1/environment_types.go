@@ -5,12 +5,12 @@ import (
 )
 
 type ControlPlaneSettings struct {
-	APICount int `json:"apiCount,omitempty"`
+	MasterCount int `json:"masterCount,omitempty"`
 	ETCDCount int `json:"etcdCount"`
 }
 
 type SecuritySettings struct{
-	EncryptionConfigName string `json:"encryptionConfig,omitempty"`
+	EncryptionSecretName string `json:"encryptionSecret,omitempty"`
 }
 
 // EnvironmentSpec defines the desired state of Environment
