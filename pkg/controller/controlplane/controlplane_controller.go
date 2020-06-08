@@ -10,6 +10,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/manager"
@@ -88,9 +89,13 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 
 	masterModel := buildMaster(instance, environment)
 
-	masterPod := masterModel.BuildPod()
+	masterDeployment := masterModel.BuildDeployment()
 
-	err = r.client.Create(context.TODO(), &masterPod)
+	if err := controllerutil.SetControllerReference(instance, masterDeployment, r.scheme); err != nil {
+		return reconcile.Result{}, err
+	}
+
+	err = r.client.Create(context.TODO(), masterDeployment)
 
 	if err != nil {
 		reqLogger.Error(err,"Error in create pod master")
