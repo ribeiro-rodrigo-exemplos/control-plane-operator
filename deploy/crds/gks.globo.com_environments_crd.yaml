@@ -33,28 +33,39 @@ spec:
           properties:
             controlPlane:
               properties:
-                etcdCount:
-                  type: integer
+                etcd:
+                  properties:
+                    instancesCount:
+                      type: integer
+                  type: object
                 master:
                   properties:
-                    maxCPU:
+                    admissionPlugins:
+                      items:
+                        type: string
+                      type: array
+                    encryptionSecret:
                       type: string
-                    maxMemory:
-                      type: string
-                    requiredCPU:
-                      type: string
-                    requiredMemory:
+                    scale:
+                      properties:
+                        instancesCount:
+                          type: integer
+                        maxCPU:
+                          type: string
+                        maxInstances:
+                          type: integer
+                        maxMemory:
+                          type: string
+                        minInstances:
+                          type: integer
+                        requiredCPU:
+                          type: string
+                        requiredMemory:
+                          type: string
+                      type: object
+                    serviceClusterIpRange:
                       type: string
                   type: object
-                masterCount:
-                  type: integer
-              required:
-              - etcdCount
-              type: object
-            security:
-              properties:
-                encryptionSecret:
-                  type: string
               type: object
           type: object
         status:

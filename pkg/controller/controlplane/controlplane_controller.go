@@ -2,8 +2,10 @@ package controlplane
 
 import (
 	"context"
+	"fmt"
 	gksv1alpha1 "gitlab.globoi.com/tks/gks/control-plane-operator/pkg/apis/gks/v1alpha1"
 	"gitlab.globoi.com/tks/gks/control-plane-operator/pkg/model/master"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -73,47 +75,47 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	environment := &gksv1alpha1.Environment{}
-	err = r.client.Get(context.TODO(), types.NamespacedName{
-		Namespace: instance.Namespace,
-		Name: instance.Spec.EnvironmentName,
-	}, environment)
+	masterDeployment := &appsv1.Deployment{}
+	clusterName := fmt.Sprintf("cluster-%s",instance.Name)
+
+	err = r.client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: request.Namespace},masterDeployment)
 
 	if err != nil {
 		if errors.IsNotFound(err){
-			reqLogger.Info("Environment not found")
-			//create default environment settings
+			err = r.createMaster(request.NamespacedName, instance)
+			if err != nil {
+				return reconcile.Result{}, err
+			}else{
+				return reconcile.Result{}, nil
+			}
 		}
 		return reconcile.Result{}, err
 	}
 
-	masterModel := buildMaster(instance, environment)
+	if instance.Spec.MasterSettings.InstancesCount != int(*masterDeployment.Spec.Replicas){
 
-	masterDeployment := masterModel.BuildDeployment()
-
-	if err := controllerutil.SetControllerReference(instance, masterDeployment, r.scheme); err != nil {
-		return reconcile.Result{}, err
-	}
-
-	err = r.client.Create(context.TODO(), masterDeployment)
-
-	if err != nil {
-		reqLogger.Error(err,"Error in create pod master")
-		return reconcile.Result{}, err
+		replicas := int32(instance.Spec.MasterSettings.InstancesCount)
+		masterDeployment.Spec.Replicas = &replicas
+		if err := r.client.Update(context.TODO(), masterDeployment); err != nil {
+			return reconcile.Result{}, err
+		}
 	}
 
 	return reconcile.Result{}, nil
 }
+func (r *ReconcileControlPlane) createMaster(namspacedName types.NamespacedName, instance *gksv1alpha1.ControlPlane)error{
+	masterModel := master.BuildMaster(namspacedName, instance.Spec.MasterSettings)
 
-func buildMaster(instance *gksv1alpha1.ControlPlane, environment *gksv1alpha1.Environment)master.Master{
-	return master.NewMaster(
-		*environment,
-		instance.Name,
-		instance.Namespace,
-		"192.168.39.42",
-		instance.Spec.ServiceClusterIPRange,
-		instance.Spec.ClusterCIDR,
-		instance.Spec.MasterSecretName,
-		instance.Spec.AdmissionPlugins,
-	)
+	masterDeployment := masterModel.BuildDeployment()
+
+	if err := controllerutil.SetControllerReference(instance, masterDeployment, r.scheme); err != nil {
+		return err
+	}
+
+	if err := r.client.Create(context.TODO(), masterDeployment); err != nil {
+		return err
+	}
+
+	return nil
 }
+

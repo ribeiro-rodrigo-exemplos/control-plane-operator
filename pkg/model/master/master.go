@@ -7,41 +7,43 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 )
 
 type Master struct{
-	environment v1alpha1.Environment
-	clusterName string
-	namespace string
-	masterSecretName string
+	settings v1alpha1.MasterSettings
+	namespacedName types.NamespacedName
 	apiServer apiServer
 	scheduler Scheduler
 	controllerManager ControllerManager
 }
 
-func NewMaster(environment v1alpha1.Environment, clusterName, namespace,
-	advertiseAddress, serviceClusterIpRange, clusterCIDRS, masterSecretName string,
-	admissionPlugins []string )Master {
+func BuildMaster(namespacedName types.NamespacedName, settings v1alpha1.MasterSettings)Master {
+
+	advertiseAddress := "192.168.39.42"
 
 	return Master{
-		environment: environment,
-		clusterName: clusterName,
-		namespace: namespace,
-		masterSecretName: masterSecretName,
-		apiServer: newAPIServer(advertiseAddress,serviceClusterIpRange,admissionPlugins,environment.Spec.MasterCount),
+		settings: settings,
+		namespacedName: namespacedName,
+		apiServer: newAPIServer(
+			advertiseAddress,
+			settings.ServiceClusterIPRange,
+			settings.AdmissionPlugins,
+			settings.InstancesCount,
+		),
 		scheduler: NewScheduler(),
-		controllerManager: NewControllerManager(clusterName, serviceClusterIpRange,clusterCIDRS),
+		controllerManager: NewControllerManager(namespacedName.Name, settings.ServiceClusterIPRange,settings.ClusterCIDR),
 	}
 }
 
 func (master *Master) BuildDeployment()*appsv1.Deployment{
 
-	replicas := int32(master.environment.Spec.MasterCount)
+	replicas := int32(master.settings.InstancesCount)
 
 	return &appsv1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
-			Namespace: master.environment.Namespace,
-			Name: fmt.Sprintf("cluster-%s",master.clusterName),
+			Namespace: master.namespacedName.Namespace,
+			Name: fmt.Sprintf("cluster-%s",master.namespacedName.Name),
 			Labels: master.buildPodLabels(),
 		},
 		Spec: appsv1.DeploymentSpec{
@@ -57,7 +59,7 @@ func (master *Master) BuildDeployment()*appsv1.Deployment{
 func (master *Master) BuildPod()corev1.PodTemplateSpec{
 	return corev1.PodTemplateSpec{
 		ObjectMeta: v1.ObjectMeta{
-			Namespace: master.environment.Namespace,
+			Namespace: master.namespacedName.Namespace,
 			Labels: master.buildPodLabels(),
 		},
 		Spec: corev1.PodSpec{
@@ -74,8 +76,7 @@ func (master *Master) BuildPod()corev1.PodTemplateSpec{
 func (master *Master) buildPodLabels()map[string]string{
 	return map[string]string{
 		"app":"master",
-		"environment": master.environment.Name,
-		"cluster": master.clusterName,
+		"cluster": master.namespacedName.Name,
 		"tier": "control-plane",
 	}
 }
@@ -84,8 +85,8 @@ func (master *Master) buildVolumes()[]corev1.Volume{
 
 	return []corev1.Volume{
 		master.buildSecretVolume("ca", "ca-certs"),
-		master.buildSecretVolume("kubernetes", master.masterSecretName),
-		master.buildSecretVolume("encryption", master.environment.Spec.EncryptionSecretName),
+		master.buildSecretVolume("kubernetes", master.settings.MasterSecretName),
+		master.buildSecretVolume("encryption", master.settings.EncryptionSecretName),
 	}
 }
 

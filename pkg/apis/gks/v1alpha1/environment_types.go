@@ -4,27 +4,22 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-type ControlPlaneSettings struct {
-	MasterCount int `json:"masterCount,omitempty"`
-	ETCDCount int `json:"etcdCount"`
-	MasterSettings `json:"master,omitempty"`
+type EnvironmentControlPlaneSettings struct {
+
+	ETCDSettings `json:"etcd,omitempty"`
+	EnvironmentMasterSettings `json:"master,omitempty"`
 }
 
-type MasterSettings struct {
-	RequiredMemory string `json:"requiredMemory,omitempty"`
-	RequiredCPU string `json:"requiredCPU,omitempty"`
-	MaxMemory string `json:"maxMemory,omitempty"`
-	MaxCPU string `json:"maxCPU,omitempty"`
-}
-
-type SecuritySettings struct{
+type EnvironmentMasterSettings struct {
+	AdmissionPlugins []string `json:"admissionPlugins,omitempty"`
+	ServiceClusterIPRange string `json:"serviceClusterIpRange,omitempty"`
+	MasterScaleSettings `json:"scale,omitempty"`
 	EncryptionSecretName string `json:"encryptionSecret,omitempty"`
 }
 
 // EnvironmentSpec defines the desired state of Environment
 type EnvironmentSpec struct {
-	ControlPlaneSettings `json:"controlPlane,omitempty"`
-	SecuritySettings `json:"security,omitempty"`
+	EnvironmentControlPlaneSettings `json:"controlPlane,omitempty"`
 }
 
 // EnvironmentStatus defines the observed state of Environment

@@ -7,13 +7,34 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// ControlPlaneSpec defines the desired state of ControlPlane
-type ControlPlaneSpec struct {
-	EnvironmentName string `json:"environment,omitempty"`
-	MasterSecretName string `json:"masterSecret,omitempty"`
+type ETCDSettings struct {
+	InstancesCount int `json:"instancesCount,omitempty"`
+}
+
+type MasterScaleSettings struct {
+	InstancesCount int `json:"instancesCount,omitempty"`
+	MaxInstances int `json:"maxInstances,omitempty"`
+	MinInstances int `json:"minInstances,omitempty"`
+	RequiredMemory string `json:"requiredMemory,omitempty"`
+	RequiredCPU string `json:"requiredCPU,omitempty"`
+	MaxMemory string `json:"maxMemory,omitempty"`
+	MaxCPU string `json:"maxCPU,omitempty"`
+}
+
+
+type MasterSettings struct {
+	MasterSecretName string `json:"certsSecret,omitempty"`
 	AdmissionPlugins []string `json:"admissionPlugins,omitempty"`
 	ServiceClusterIPRange string `json:"serviceClusterIpRange,omitempty"`
 	ClusterCIDR string `json:"clusterCidr,omitempty"`
+	MasterScaleSettings `json:"scale,omitempty"`
+	EncryptionSecretName string `json:"encryptionSecret,omitempty"`
+}
+
+// ControlPlaneSpec defines the desired state of ControlPlane
+type ControlPlaneSpec struct {
+	EnvironmentName string `json:"environment,omitempty"`
+	MasterSettings `json:"master,omitempty"`
 }
 
 // ControlPlaneStatus defines the observed state of ControlPlane
