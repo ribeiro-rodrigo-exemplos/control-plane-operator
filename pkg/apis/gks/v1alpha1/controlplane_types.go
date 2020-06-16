@@ -11,23 +11,31 @@ type ETCDSettings struct {
 	InstancesCount int `json:"instancesCount,omitempty"`
 }
 
-type MasterScaleSettings struct {
-	InstancesCount int `json:"instancesCount,omitempty"`
-	MaxInstances int `json:"maxInstances,omitempty"`
-	MinInstances int `json:"minInstances,omitempty"`
+type MasterResources struct {
 	RequiredMemory string `json:"requiredMemory,omitempty"`
 	RequiredCPU string `json:"requiredCPU,omitempty"`
-	MaxMemory string `json:"maxMemory,omitempty"`
-	MaxCPU string `json:"maxCPU,omitempty"`
+	LimitMemory string `json:"limitMemory,omitempty"`
+	LimitCPU string `json:"limitCPU,omitempty"`
 }
 
+type MasterScaleSettings struct {
+	MaxInstances int `json:"maxInstances,omitempty"`
+	MinInstances int `json:"minInstances,omitempty"`
+	LimitCPUPercent float32 `json:"limitCPUPercent,omitempty"`
+	LimitMemoryPercent string `json:"limitMemoryPercent,omitempty"`
+}
 
 type MasterSettings struct {
+	MasterClusterSettings `json:"settings,omitempty"`
+	MasterScaleSettings   `json:"scale,omitempty"`
+}
+
+type MasterClusterSettings struct {
 	MasterSecretName string `json:"certsSecret,omitempty"`
+	MasterResources string `json:"resources,omitempty"`
 	AdmissionPlugins []string `json:"admissionPlugins,omitempty"`
 	ServiceClusterIPRange string `json:"serviceClusterIpRange,omitempty"`
 	ClusterCIDR string `json:"clusterCidr,omitempty"`
-	MasterScaleSettings `json:"scale,omitempty"`
 	EncryptionSecretName string `json:"encryptionSecret,omitempty"`
 }
 
@@ -39,9 +47,7 @@ type ControlPlaneSpec struct {
 
 // ControlPlaneStatus defines the observed state of ControlPlane
 type ControlPlaneStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "operator-sdk generate k8s" to regenerate code after modifying this file
-	// Add custom validation using kubebuilder tags: https://book-v1.book.kubebuilder.io/beyond_basics/generating_crd.html
+	LastMasterSettings *MasterSettings `json:"master,omitempty"`
 }
 
 // +k8s:deepcopy-gen:interfaces=k8s.io/apimachinery/pkg/runtime.Object

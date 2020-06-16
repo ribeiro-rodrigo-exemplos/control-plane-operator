@@ -35,39 +35,70 @@ spec:
               type: string
             master:
               properties:
-                admissionPlugins:
-                  items:
-                    type: string
-                  type: array
-                certsSecret:
-                  type: string
-                clusterCidr:
-                  type: string
-                encryptionSecret:
-                  type: string
                 scale:
                   properties:
-                    instancesCount:
-                      type: integer
-                    maxCPU:
+                    limitCPUPercent:
+                      type: string
+                    limitMemoryPercent:
                       type: string
                     maxInstances:
                       type: integer
-                    maxMemory:
-                      type: string
                     minInstances:
                       type: integer
-                    requiredCPU:
+                  type: object
+                settings:
+                  properties:
+                    admissionPlugins:
+                      items:
+                        type: string
+                      type: array
+                    certsSecret:
                       type: string
-                    requiredMemory:
+                    clusterCidr:
+                      type: string
+                    encryptionSecret:
+                      type: string
+                    resources:
+                      type: string
+                    serviceClusterIpRange:
                       type: string
                   type: object
-                serviceClusterIpRange:
-                  type: string
               type: object
           type: object
         status:
           description: ControlPlaneStatus defines the observed state of ControlPlane
+          properties:
+            master:
+              properties:
+                scale:
+                  properties:
+                    limitCPUPercent:
+                      type: string
+                    limitMemoryPercent:
+                      type: string
+                    maxInstances:
+                      type: integer
+                    minInstances:
+                      type: integer
+                  type: object
+                settings:
+                  properties:
+                    admissionPlugins:
+                      items:
+                        type: string
+                      type: array
+                    certsSecret:
+                      type: string
+                    clusterCidr:
+                      type: string
+                    encryptionSecret:
+                      type: string
+                    resources:
+                      type: string
+                    serviceClusterIpRange:
+                      type: string
+                  type: object
+              type: object
           type: object
       type: object
   version: v1alpha1

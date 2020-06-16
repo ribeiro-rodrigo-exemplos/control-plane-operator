@@ -48,20 +48,14 @@ spec:
                       type: string
                     scale:
                       properties:
-                        instancesCount:
-                          type: integer
-                        maxCPU:
+                        limitCPUPercent:
+                          type: string
+                        limitMemoryPercent:
                           type: string
                         maxInstances:
                           type: integer
-                        maxMemory:
-                          type: string
                         minInstances:
                           type: integer
-                        requiredCPU:
-                          type: string
-                        requiredMemory:
-                          type: string
                       type: object
                     serviceClusterIpRange:
                       type: string

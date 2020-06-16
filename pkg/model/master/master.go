@@ -3,8 +3,8 @@ package master
 import (
 	"fmt"
 	"gitlab.globoi.com/tks/gks/control-plane-operator/pkg/apis/gks/v1alpha1"
-	corev1 "k8s.io/api/core/v1"
 	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -18,7 +18,7 @@ type Master struct{
 	controllerManager ControllerManager
 }
 
-func BuildMaster(namespacedName types.NamespacedName, settings v1alpha1.MasterSettings)Master {
+func NewMaster(namespacedName types.NamespacedName, settings v1alpha1.MasterSettings)Master {
 
 	advertiseAddress := "192.168.39.42"
 
@@ -29,16 +29,23 @@ func BuildMaster(namespacedName types.NamespacedName, settings v1alpha1.MasterSe
 			advertiseAddress,
 			settings.ServiceClusterIPRange,
 			settings.AdmissionPlugins,
-			settings.InstancesCount,
 		),
 		scheduler: NewScheduler(),
 		controllerManager: NewControllerManager(namespacedName.Name, settings.ServiceClusterIPRange,settings.ClusterCIDR),
 	}
 }
 
+func (master *Master) Merge(newMaster Master)Merger{
+	return Merger{
+		oldMaster: *master,
+		newMaster: newMaster,
+		namespacedName: master.namespacedName,
+	}
+}
+
 func (master *Master) BuildDeployment()*appsv1.Deployment{
 
-	replicas := int32(master.settings.InstancesCount)
+	replicas := int32(1)
 
 	return &appsv1.Deployment{
 		ObjectMeta: v1.ObjectMeta{
@@ -51,12 +58,12 @@ func (master *Master) BuildDeployment()*appsv1.Deployment{
 			Selector: &metav1.LabelSelector{
 				MatchLabels: master.buildPodLabels(),
 			},
-			Template: master.BuildPod(),
+			Template: master.buildPod(),
 		},
 	}
 }
 
-func (master *Master) BuildPod()corev1.PodTemplateSpec{
+func (master *Master) buildPod()corev1.PodTemplateSpec{
 	return corev1.PodTemplateSpec{
 		ObjectMeta: v1.ObjectMeta{
 			Namespace: master.namespacedName.Namespace,

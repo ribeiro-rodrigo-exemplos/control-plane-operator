@@ -86,25 +86,42 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 			if err != nil {
 				return reconcile.Result{}, err
 			}else{
-				return reconcile.Result{}, nil
+				return reconcile.Result{Requeue: true}, nil
 			}
 		}
 		return reconcile.Result{}, err
 	}
 
-	if instance.Spec.MasterSettings.InstancesCount != int(*masterDeployment.Spec.Replicas){
+	if instance.Status.LastMasterSettings != nil {
 
-		replicas := int32(instance.Spec.MasterSettings.InstancesCount)
-		masterDeployment.Spec.Replicas = &replicas
-		if err := r.client.Update(context.TODO(), masterDeployment); err != nil {
-			return reconcile.Result{}, err
+		oldMaster := master.NewMaster(request.NamespacedName, *instance.Status.LastMasterSettings)
+		newMaster := master.NewMaster(request.NamespacedName, instance.Spec.MasterSettings)
+
+		merger := oldMaster.Merge(newMaster)
+
+		masterMerged, mergedSettings, mergedScaleSettings :=  merger.MergeSettings()
+
+		if mergedSettings {
+			updateDeploy := masterMerged.BuildDeployment()
+			if err = r.client.Update(context.TODO(),updateDeploy); err != nil {
+				return reconcile.Result{}, err
+			}
+		}
+
+		if mergedScaleSettings {
+			//update HPA
 		}
 	}
 
+	 if err := r.updateMasterStatus(instance); err != nil {
+	 	return reconcile.Result{}, err
+	 }
+
 	return reconcile.Result{}, nil
 }
+
 func (r *ReconcileControlPlane) createMaster(namspacedName types.NamespacedName, instance *gksv1alpha1.ControlPlane)error{
-	masterModel := master.BuildMaster(namspacedName, instance.Spec.MasterSettings)
+	masterModel := master.NewMaster(namspacedName, instance.Spec.MasterSettings)
 
 	masterDeployment := masterModel.BuildDeployment()
 
@@ -117,5 +134,11 @@ func (r *ReconcileControlPlane) createMaster(namspacedName types.NamespacedName,
 	}
 
 	return nil
+}
+
+func (r *ReconcileControlPlane) updateMasterStatus(instance *gksv1alpha1.ControlPlane)error {
+	instance.Status.LastMasterSettings = &instance.Spec.MasterSettings
+	err := r.client.Status().Update(context.TODO(), instance)
+	return err
 }
 

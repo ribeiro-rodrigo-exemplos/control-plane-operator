@@ -11,18 +11,16 @@ type apiServer struct {
 	serviceClusterIPRange string
 	advertiseAddress string
 	admissionPlugins []string
-	masterCount int
 }
 
 func newAPIServer(advertiseAddress, serviceClusterIpRange string,
-	admissionPlugins []string, masterCount int )apiServer{
+	admissionPlugins []string)apiServer{
 	apiServer := apiServer{
 		image: "rodrigoribeiro/globo-kube-apiserver",
 		applicationName: "kube-apiserver",
 		advertiseAddress: advertiseAddress,
 		serviceClusterIPRange: serviceClusterIpRange,
 		admissionPlugins: admissionPlugins,
-		masterCount: masterCount,
 	}
 
 	return apiServer
@@ -55,7 +53,7 @@ func (apiServer *apiServer) buildCommands()[]string{
 		apiServer.applicationName,
 		printFlag("advertise-address",apiServer.advertiseAddress),
 		printFlag("allow-privileged",true),
-		printFlag("apiserver-count", apiServer.masterCount),
+		printFlag("apiserver-count", 1),
 		printFlag("audit-log-maxage",30),
 		printFlag("audit-log-maxbackup",3),
 		printFlag("audit-log-maxsize",100),
