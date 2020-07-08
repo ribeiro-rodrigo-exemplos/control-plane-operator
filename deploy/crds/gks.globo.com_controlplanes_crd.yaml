@@ -38,7 +38,7 @@ spec:
                 scale:
                   properties:
                     limitCPUPercent:
-                      type: string
+                      type: integer
                     limitMemoryPercent:
                       type: string
                     maxInstances:
@@ -73,7 +73,7 @@ spec:
                 scale:
                   properties:
                     limitCPUPercent:
-                      type: string
+                      type: integer
                     limitMemoryPercent:
                       type: string
                     maxInstances:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	gksv1alpha1 "gitlab.globoi.com/tks/gks/control-plane-operator/pkg/apis/gks/v1alpha1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	"gitlab.globoi.com/tks/gks/control-plane-operator/pkg/model/master"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -75,10 +76,12 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
-	masterDeployment := &appsv1.Deployment{}
 	clusterName := fmt.Sprintf("cluster-%s",instance.Name)
+	clusterNamespacedName := types.NamespacedName{Name: clusterName, Namespace: request.Namespace}
 
-	err = r.client.Get(context.TODO(), types.NamespacedName{Name: clusterName, Namespace: request.Namespace},masterDeployment)
+	masterDeployment := &appsv1.Deployment{}
+
+	err = r.client.Get(context.TODO(), clusterNamespacedName ,masterDeployment)
 
 	if err != nil {
 		if errors.IsNotFound(err){
@@ -92,14 +95,23 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 		return reconcile.Result{}, err
 	}
 
+	masterHPA := &autoscalingv2.HorizontalPodAutoscaler{}
+	err = r.client.Get(context.TODO(), clusterNamespacedName, masterHPA)
+
+	if err != nil {
+		if errors.IsNotFound(err){
+			if err = r.createHPA(request.NamespacedName, instance); err != nil {
+				return reconcile.Result{}, err
+			}else{
+				return reconcile.Result{}, nil
+			}
+		}
+		return reconcile.Result{}, err
+	}
+
 	if instance.Status.LastMasterSettings != nil {
 
-		oldMaster := master.NewMaster(request.NamespacedName, *instance.Status.LastMasterSettings)
-		newMaster := master.NewMaster(request.NamespacedName, instance.Spec.MasterSettings)
-
-		merger := oldMaster.Merge(newMaster)
-
-		masterMerged, mergedSettings, mergedScaleSettings :=  merger.MergeSettings()
+		masterMerged, mergedSettings, mergedScaleSettings := r.ensureMerge(request.NamespacedName,instance)
 
 		if mergedSettings {
 			updateDeploy := masterMerged.BuildDeployment()
@@ -109,7 +121,10 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 		}
 
 		if mergedScaleSettings {
-			//update HPA
+			updateHPA := masterMerged.BuildAutoScaling()
+			if err = r.client.Update(context.TODO(), updateHPA); err != nil {
+				return reconcile.Result{}, err
+			}
 		}
 	}
 
@@ -118,6 +133,16 @@ func (r *ReconcileControlPlane) Reconcile(request reconcile.Request) (reconcile.
 	 }
 
 	return reconcile.Result{}, nil
+}
+
+func (r *ReconcileControlPlane) ensureMerge(namespacedName types.NamespacedName,
+	instance *gksv1alpha1.ControlPlane) (master.Master, bool, bool){
+
+	currentMaster := master.NewMaster(namespacedName, *instance.Status.LastMasterSettings)
+
+	merger := currentMaster.Merge(instance.Spec.MasterSettings)
+
+	return merger.MergeSettings()
 }
 
 func (r *ReconcileControlPlane) createMaster(namspacedName types.NamespacedName, instance *gksv1alpha1.ControlPlane)error{
@@ -133,6 +158,10 @@ func (r *ReconcileControlPlane) createMaster(namspacedName types.NamespacedName,
 		return err
 	}
 
+	return nil
+}
+
+func (r *ReconcileControlPlane) createHPA(namespacedName types.NamespacedName, instance *gksv1alpha1.ControlPlane)error{
 	return nil
 }
 

@@ -21,7 +21,7 @@ type MasterResources struct {
 type MasterScaleSettings struct {
 	MaxInstances int `json:"maxInstances,omitempty"`
 	MinInstances int `json:"minInstances,omitempty"`
-	LimitCPUPercent float32 `json:"limitCPUPercent,omitempty"`
+	LimitCPUPercent int `json:"limitCPUPercent,omitempty"`
 	LimitMemoryPercent string `json:"limitMemoryPercent,omitempty"`
 }
 

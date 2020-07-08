@@ -6,6 +6,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	autoscalingv2 "k8s.io/api/autoscaling/v2beta2"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 )
@@ -35,11 +36,32 @@ func NewMaster(namespacedName types.NamespacedName, settings v1alpha1.MasterSett
 	}
 }
 
-func (master *Master) Merge(newMaster Master)Merger{
+func (master *Master) Merge(newSettings v1alpha1.MasterSettings)Merger{
 	return Merger{
 		oldMaster: *master,
-		newMaster: newMaster,
+		newMaster: NewMaster(master.namespacedName, newSettings),
 		namespacedName: master.namespacedName,
+	}
+}
+
+func (master *Master) BuildAutoScaling()*autoscalingv2.HorizontalPodAutoscaler{
+
+	minReplicas := int32(master.settings.MinInstances)
+
+	return &autoscalingv2.HorizontalPodAutoscaler{
+		ObjectMeta: v1.ObjectMeta{
+			Namespace: master.namespacedName.Namespace,
+			Name: fmt.Sprintf("hpa-%s",master.namespacedName.Name),
+		},
+		Spec: autoscalingv2.HorizontalPodAutoscalerSpec{
+			ScaleTargetRef: autoscalingv2.CrossVersionObjectReference{
+				Kind: "Deployment",
+				APIVersion: "apps/v1",
+				Name: fmt.Sprintf("cluster-%s",master.namespacedName.Name),
+			},
+			MinReplicas: &minReplicas,
+			MaxReplicas: int32(master.settings.MaxInstances),
+		},
 	}
 }
 
